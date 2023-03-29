@@ -1,30 +1,36 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
-name: .NET
+name: Build and Tests
 
-on:
+on:  
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
-jobs:
-  build:
-
+jobs:  
+  build:    
     runs-on: windows-latest
+    
+    steps:      
+      - uses: actions/checkout@v2
+      
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
 
-    steps:
-    - uses: actions/checkout@v2
-      
-    - name: setup MSbuild
-      uses: microsoft/setup-msbuild@v1
-      
-    - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.2
-      
-    - name: restore nuget packages
-      run: nuget restore "Draconia bot.sln"
-      
-    - name: build solution
-      run: msbuild "Draconia bot.sln"
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1.0.5
+        
+      - name: Setup VSTest
+        uses: darenm/Setup-VSTest@v1
+
+      - name: Restore Packages
+        run: nuget restore Draconia bot.sln
+
+      - name: Build Solution
+        run: |
+          msbuild.exe Draconia bot.sln /p:platform="Any CPU" /p:configuration="Release"
+        
+      - name: Run Tests
+        run: vstest.console.exe .\tests\Draconia bot.Tests\bin\Release\Draconia bot.Tests.dll
