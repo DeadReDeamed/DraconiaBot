@@ -24,7 +24,7 @@ namespace Draconia_bot
         public async Task RunAsync()
         {
             var json = string.Empty;
-            using (var fs = File.OpenRead("config.json"))
+            using (var fs = File.OpenRead("Config.json"))
             using (var sr = new StreamReader(fs, new UTF8Encoding(false)))
                 json = await sr.ReadToEndAsync();
 
