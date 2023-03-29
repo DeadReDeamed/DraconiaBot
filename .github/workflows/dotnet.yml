@@ -16,11 +16,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      
     - name: setup MSbuild
-    - uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v1
+      
     - name: Setup NuGet
-    - uses: NuGet/setup-nuget@v1.0.2
+      uses: NuGet/setup-nuget@v1.0.2
+      
     - name: restore nuget packages
-    - run: nuget restore "Draconia bot.sln"
+      run: nuget restore "Draconia bot.sln"
+      
     - name: build solution
-    - run: msbuild "Draconia bot.sln"
+      run: msbuild "Draconia bot.sln"
