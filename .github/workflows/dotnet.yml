@@ -26,9 +26,9 @@ jobs:
         uses: darenm/Setup-VSTest@v1
 
       - name: Restore Packages
-        run: nuget restore "Draconia bot.sln"
+        run: nuget restore "DiscordBot.sln"
 
       - name: Build Solution
         run: |
-          msbuild.exe "Draconia bot.sln" /p:platform="Any CPU" /p:configuration="Release"
+          msbuild.exe "DiscordBot.sln" /p:platform="Any CPU" /p:configuration="Release"
         
