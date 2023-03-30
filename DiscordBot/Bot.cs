@@ -25,9 +25,8 @@ namespace Draconia_bot
 
         public async Task RunAsync()
         {
-            string keyName = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment\";
-            string token = (string)Registry.LocalMachine.OpenSubKey(keyName).GetValue("DISCORD_TOKEN", "", RegistryValueOptions.DoNotExpandEnvironmentNames);
-  
+            
+            string token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
 
             if(token == null)
             {
