@@ -28,7 +28,7 @@ jobs:
       run: docker login -u ${{ secrets.DOCKER_USER }} 
            -p ${{ secrets.DOCKER_PASS }}
     - name: Build the Docker image
-      run: docker build ./DiscordBot --file Dockerfile --tag discordbot:$(date +%s)
+      run: docker build --tag discordbot:latest ./DiscordBot
     - name: Publish Docker image
       run: docker push $REPO
   
