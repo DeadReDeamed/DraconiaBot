@@ -42,5 +42,10 @@ jobs:
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         port: ${{ secrets.PORT }}
-        script: /usr/docs/redeploy.sh
+        script: |
+          docker pull lucabrugel/discordbot:latest
+          docker stop /discordBot
+          docker system prune -f
+          docker run -d --name=discordBot --env DISCORD_TOKEN=${{ secrets.DISCORDBOT_TOKEN }} lucabrugel/discordbot:latest
+
         
