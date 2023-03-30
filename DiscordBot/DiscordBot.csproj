@@ -12,12 +12,14 @@
         <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
         <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
         <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+        <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="DSharpPlus" Version="4.4.0" />
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.4.0" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.4.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.2" />
   </ItemGroup>
 
 </Project>

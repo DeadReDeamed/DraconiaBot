@@ -5,8 +5,10 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,16 +25,19 @@ namespace Draconia_bot
 
         public async Task RunAsync()
         {
-            var json = string.Empty;
-            using (var fs = File.OpenRead("Config.json"))
-            using (var sr = new StreamReader(fs, new UTF8Encoding(false)))
-                json = await sr.ReadToEndAsync();
+            string keyName = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment\";
+            string token = (string)Registry.LocalMachine.OpenSubKey(keyName).GetValue("DISCORD_TOKEN", "", RegistryValueOptions.DoNotExpandEnvironmentNames);
+  
 
-            var configJson = JsonConvert.DeserializeObject<ConfigJson>(json);
+            if(token == null)
+            {
+                Console.WriteLine("Token was not found!");
+                Environment.Exit(-1);
+            }
 
             var config = new DiscordConfiguration()
             {
-                Token = configJson.Token,
+                Token = token,
                 TokenType = TokenType.Bot,
                 AutoReconnect = true,
                 Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
@@ -47,7 +52,7 @@ namespace Draconia_bot
 
             var commandsConfig = new CommandsNextConfiguration()
             {
-                StringPrefixes = new string[] { configJson.Prefix },
+                StringPrefixes = new string[] { "." },
                 EnableMentionPrefix = true,
                 EnableDms = true,
                 EnableDefaultHelp = true,
