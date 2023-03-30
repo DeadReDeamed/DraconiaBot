@@ -27,8 +27,8 @@ jobs:
     - name: Login to Docker Hub
       run: docker login -u ${{ secrets.DOCKER_USER }} 
            -p ${{ secrets.DOCKER_PASS }}
-    - name: Build Docker image
-      run: docker build --tag draconiabot:latest .
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
     - name: Publish Docker image
       run: docker push $REPO
   
