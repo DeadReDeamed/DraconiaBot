@@ -28,12 +28,7 @@ jobs:
       run: docker login -u ${{ secrets.DOCKER_USER }} 
            -p ${{ secrets.DOCKER_PASS }}
     - name: Build Docker image
-      run: docker build --tag draconiabot:latest .
-    - name: add discordBot token
-      run: | 
-        echo {"token": ${{ secrets.DISCORDBOT_TOKEN }}, "prefix": "."} > Config.json
-    - name: add config to image
-      run: cp Config.json $REPO:/container
+      run: docker build --tag draconiabot:latest ./DiscordBot
     - name: Publish Docker image
       run: docker push $REPO
   
