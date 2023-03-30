@@ -33,12 +33,14 @@ jobs:
       run: docker push $REPO
   
   redeploy:
-    name: Redeploy webhook call
     runs-on: ubuntu-latest
-    needs: [docker]
     steps:
-      - name: Deploy docker container webhook
-        uses: joelwmale/webhook-action@master
-        env:
-          WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL  }}
-          data: "{ 'myField': 'myFieldValue'}"
+    - name: executing remote ssh commands using password
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: ${{ secrets.PORT }}
+        script: /usr/docs/redeploy.sh
+        
