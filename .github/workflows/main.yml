@@ -34,7 +34,7 @@ jobs:
       run: docker login -u ${{ secrets.DOCKER_USER }} 
            -p ${{ secrets.DOCKER_PASS }}
     - name: Build Docker image
-      run: docker build -t $REPO:latest -t $REPO:${GITHUB_SHA} .
+      run: docker build --tag DraconiaBot:latest --tag DraconiaBot:$(date +%s) .
     - name: add discordBot token
       run: | 
         echo {"token": ${{ secrets.DISCORDBOT_TOKEN }}, "prefix": "."} > Config.json
