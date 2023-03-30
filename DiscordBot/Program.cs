@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace Draconia_bot
 {
-    internal class Program
+    static class Program
     {
+        [STAThread]
         static void Main(string[] args)
         {
             var bot = new Bot();

@@ -13,7 +13,6 @@
         <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
         <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-	    <DockerfileContext>..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>
