@@ -25,10 +25,9 @@ namespace Draconia_bot
 
         public async Task RunAsync()
         {
-            
             string token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
 
-            if(token == null)
+            if (token == null)
             {
                 Console.WriteLine("Token was not found!");
                 Environment.Exit(-1);
@@ -55,7 +54,7 @@ namespace Draconia_bot
                 EnableMentionPrefix = true,
                 EnableDms = true,
                 EnableDefaultHelp = true,
-                DmHelp = true,
+                DmHelp = true
             };
 
             Commands = Client.UseCommandsNext(commandsConfig);

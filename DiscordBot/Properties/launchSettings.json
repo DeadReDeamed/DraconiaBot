@@ -5,7 +5,7 @@
     },
     "Docker": {
       "commandName": "Docker",
-      "DockerfileRunArguments": "--env DISCORD_TOKEN"
+      "DockerfileRunArguments": "--env DISCORD_TOKEN --env DATABASE_PASSWORD=KingsOfLeon321! --add-host host.docker.internal:host-gateway"
     }
   }
 }
