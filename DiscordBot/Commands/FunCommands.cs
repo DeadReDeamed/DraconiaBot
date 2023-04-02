@@ -82,37 +82,5 @@ namespace Draconia_bot.Commands
             var messages = await ctx.Channel.GetMessagesAsync(amount);
             await ctx.Channel.DeleteMessagesAsync(messages);
         }
-
-        [Command("myPlayer")]
-        public async Task GetPlayerProfile(CommandContext ctx)
-        {
-            var DiscordId = ctx.User.Id;
-            var GuildId = ctx.Guild.Id;
-            var player = await PlayerQuerries.GetPlayer(DiscordId, GuildId);
-            if(player == null)
-            {
-                await PlayerQuerries.AddPlayer(DiscordId, GuildId);
-                player = new Player(0, DiscordId, GuildId, 0);
-            }
-
-            var embed = new DiscordEmbedBuilder
-            {
-                Title = $"{ctx.Guild.Members[player.DiscordId].DisplayName}'s player"
-            };
-            embed.WithThumbnail(ctx.Guild.Members[player.DiscordId].AvatarUrl);
-            embed.AddField("Xp", player.Xp.ToString());
-            await ctx.Channel.SendMessageAsync(embed: embed);
-        }
-
-        [Command("addXp")]
-        [RequireUserPermissions(Permissions.Administrator)]
-        public async Task AppXpToPlayer(CommandContext ctx, int amount)
-        {
-            var DiscordId = ctx.User.Id;
-            var GuildId = ctx.Guild.Id;
-
-            await PlayerQuerries.AddXp(DiscordId, GuildId, amount);
-            await ctx.Channel.SendMessageAsync($"{amount} xp added");
-        }
     }
 }

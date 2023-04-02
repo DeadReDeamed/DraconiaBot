@@ -5,17 +5,21 @@
         public ulong DiscordId { get; set; }
         public ulong GuildId { get; set; }
         public int Xp { get; set; }
+        public string Name { get; set; }
+        public Attributes attributes { get; set; }
+        public Inventory inventory { get; set; }
 
         public Player(int id) : base(id) 
         {
             
         }
 
-        public Player(int id, ulong DiscordId, ulong GuildId, int Xp) : base(id)
+        public Player(long id, string name, ulong DiscordId, ulong GuildId, int Xp) : base(id)
         {
             this.DiscordId = DiscordId;
             this.GuildId = GuildId; 
             this.Xp = Xp; 
+            this.Name = name;
         }
     }
 }

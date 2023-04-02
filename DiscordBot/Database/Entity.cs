@@ -1,11 +1,11 @@
 ﻿
 namespace DiscordBot.Database
 {
-    public class Entity
+    public abstract class Entity
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
 
-        public Entity(int id) 
+        public Entity(long id) 
         {
             Id = id;
         }
