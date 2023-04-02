@@ -93,6 +93,8 @@ namespace DiscordBot.PlayerFunctionality.Creation
                 Color = DiscordColor.Green
             });
 
+            await Task.Delay(1000);
+
             await channel.DeleteAsync();
             if(category.Children.Count <= 1)
             {
