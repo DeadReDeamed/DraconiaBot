@@ -11,7 +11,7 @@ namespace DiscordBot.Commands.PlayerCommands
     
     public class PlayerCommands : BaseCommandModule
     {
-        [Command("myPlayer")]
+        [Command("myCharacter")]
         public async Task GetPlayerProfile(CommandContext ctx)
         {
             var DiscordId = ctx.User.Id;
@@ -22,17 +22,30 @@ namespace DiscordBot.Commands.PlayerCommands
                 var errorEmbed = new DiscordEmbedBuilder
                 {
                     Title = "Character not found",
-                    Description = "You don't have a character yet, please create one with the .createCharacter command!",
+                    Description = "You don't have a character yet or something went wrong, please create one with the .createCharacter command!",
                     Color = DiscordColor.Red,
                 };
+                await ctx.Channel.SendMessageAsync(embed: errorEmbed);
+                return;
             }
 
             var embed = new DiscordEmbedBuilder
             {
-                Title = $"{ctx.Guild.Members[player.DiscordId].DisplayName}'s player"
+                Title = $"{ctx.Guild.Members[player.DiscordId].DisplayName}'s player",
+                Color = DiscordColor.Green
             };
+
+            embed.AddField("Name:", player.Name);
+            embed.AddField("Xp:", ":sparkle: " + player.Xp.ToString(), true);
+            embed.AddField("Gold: ", ":coin: " + player.Gold, true);
+            embed.AddField("Attributes", $":muscle: Strength: {player.attributes.Strength}" +
+                $"\n:man_running: Dexterity: {player.attributes.Dexterity}" +
+                $"\n:heart: Constitution:{player.attributes.Constitution} " +
+                $"\n:brain: Intelligence: {player.attributes.Intelligence}" +
+                $"\n:church: Wisdom: {player.attributes.Wisdom}" +
+                $"\n:speech_balloon: Charisma: {player.attributes.Charisma}");
+            embed.AddField("Inventory: ", "empty");
             embed.WithThumbnail(ctx.Guild.Members[player.DiscordId].AvatarUrl);
-            embed.AddField("Xp", player.Xp.ToString());
             await ctx.Channel.SendMessageAsync(embed: embed);
         }
 

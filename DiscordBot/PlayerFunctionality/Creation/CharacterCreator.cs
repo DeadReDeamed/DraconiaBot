@@ -1,5 +1,6 @@
 ﻿using Azure.Identity;
 using DiscordBot.Database.Profile;
+using DiscordBot.Database.Queries;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
@@ -93,13 +94,36 @@ namespace DiscordBot.PlayerFunctionality.Creation
                 Color = DiscordColor.Green
             });
 
-            await Task.Delay(1000);
+            player.DiscordId = ctx.User.Id;
+            player.GuildId = ctx.Guild.Id;
 
-            await channel.DeleteAsync();
-            if(category.Children.Count <= 1)
+            bool succes = await PlayerQuerries.AddPlayer(player.Name, player.DiscordId, player.GuildId);
+            if (succes)
             {
-                await category.DeleteAsync();
+                long id = await PlayerQuerries.GetPlayerId(player.DiscordId, player.GuildId);
+                succes = await PlayerQuerries.AddAttributes(id, player.attributes);
+                if(succes) 
+                {
+                    await Task.Delay(1000);
+
+                    await channel.DeleteAsync();
+                    if (category.Children.Count <= 1)
+                    {
+                        await category.DeleteAsync();
+                    }
+                } else
+                {
+                    var errorEmbed = new DiscordEmbedBuilder
+                    {
+                        Title = "Character not found",
+                        Description = "You don't have a character yet or something went wrong, please create one with the .createCharacter command!",
+                        Color = DiscordColor.Red,
+                    };
+                    await ctx.Channel.SendMessageAsync(embed: errorEmbed);
+                }
             }
+
+            
         }
 
         private async Task<DiscordMessage> CreateCharacterPopUp(CommandContext ctx, DiscordChannel channel)

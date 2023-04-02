@@ -12,61 +12,110 @@ namespace DiscordBot.Database.Queries
         {
             Player player = null;
             var connection = DBConnection.Instance().getConnection();
-            if (connection != null) {
-                var command = new MySqlCommand($"SELECT * FROM players p, player_attributes a INNER JOIN players ON a.Id=p.Id WHERE p.DiscordId={DiscordId} AND p.GuildId={GuildId}", connection);
-                var reader = await command.ExecuteReaderAsync();
-                if (reader.HasRows)
+            if (connection != null)
+            {
+                try
                 {
-                    await reader.ReadAsync();
-                    player = new Player(reader.GetInt32(reader.GetOrdinal("Id")), 
-                        reader.GetString(reader.GetOrdinal("Name")), 
-                        reader.GetUInt64(reader.GetOrdinal("DiscordId")), 
-                        reader.GetUInt64(reader.GetOrdinal("GuildId")), 
-                        reader.GetInt32(reader.GetOrdinal("Xp")));
+                    var command = new MySqlCommand($"SELECT * FROM player_attributes a LEFT JOIN players p ON p.Id = a.Id WHERE p.DiscordId={DiscordId} AND p.GuildId={GuildId}", connection);
+                    var reader = await command.ExecuteReaderAsync();
+                    if (reader.HasRows)
+                    {
+                        await reader.ReadAsync();
+                        player = new Player(reader.GetInt32(reader.GetOrdinal("Id")),
+                            reader.GetString(reader.GetOrdinal("Name")),
+                            reader.GetUInt64(reader.GetOrdinal("DiscordId")),
+                            reader.GetUInt64(reader.GetOrdinal("GuildId")),
+                            reader.GetInt32(reader.GetOrdinal("Xp")),
+                            reader.GetUInt32(reader.GetOrdinal("Gold")));
 
-                    player.attributes = new Attributes(player.Id,
-                        reader.GetInt16(reader.GetOrdinal("Strength")),
-                        reader.GetInt16(reader.GetOrdinal("Dexterity")),
-                        reader.GetInt16(reader.GetOrdinal("Constitution")),
-                        reader.GetInt16(reader.GetOrdinal("Intelligence")),
-                        reader.GetInt16(reader.GetOrdinal("Wisdom")),
-                        reader.GetInt16(reader.GetOrdinal("Charisma")));
+                        player.attributes = new Attributes(player.Id,
+                            reader.GetInt16(reader.GetOrdinal("Strength")),
+                            reader.GetInt16(reader.GetOrdinal("Dexterity")),
+                            reader.GetInt16(reader.GetOrdinal("Constitution")),
+                            reader.GetInt16(reader.GetOrdinal("Intelligence")),
+                            reader.GetInt16(reader.GetOrdinal("Wisdom")),
+                            reader.GetInt16(reader.GetOrdinal("Charisma")));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("[DBERROR] " + ex.Message);
                 }
                 connection.Close();
-            } 
+            }
             return player;
         }
 
-        public static async Task AddPlayer(ulong DiscordId, ulong GuildId)
+        public static async Task<long> GetPlayerId(ulong DiscordId, ulong GuildId)
         {
+            long id = 0;
             var connection = DBConnection.Instance().getConnection();
             if (connection != null)
             {
-                var command = new MySqlCommand($"INSERT INTO players (DiscordId, GuildId, Xp) VALUES" +
-                                            $"({DiscordId}, {GuildId}, 0)", connection);
+                var command = new MySqlCommand($"SELECT Id FROM players WHERE players.DiscordId={DiscordId} AND players.GuildId={GuildId}", connection);
 
-                await command.ExecuteScalarAsync();
+                var reader = await command.ExecuteReaderAsync();
+                if (reader != null)
+                {
+                    await reader.ReadAsync();
+                    id = reader.GetInt64(0);
+                }
                 connection.Close();
             }
-            return;
+            return id;
         }
 
-        public static async Task AddAttributes(long id, Attributes attributes)
+        public static async Task<bool> AddPlayer(string Name, ulong DiscordId, ulong GuildId)
         {
-            var connection = DBConnection.Instance().getConnection();
-            if (connection != null)
+            try
             {
-                var command = new MySqlCommand($"INSERT INTO player_attributes VALUES ({id}, " +
-                $"{attributes.Strength}, " +
-                $"{attributes.Dexterity}, " +
-                $"{attributes.Constitution}, " +
-                $"{attributes.Intelligence}, " +
-                $"{attributes.Wisdom}, " +
-                $"{attributes.Charisma})", connection);
-                await command.ExecuteScalarAsync();
+                var connection = DBConnection.Instance().getConnection();
+                if (connection != null)
+                {
+                    var command = new MySqlCommand($"INSERT INTO players (Name, DiscordId, GuildId, Xp, Gold) VALUES" +
+                                                $"(\"{Name}\", {DiscordId}, {GuildId}, 0, 0)", connection);
 
-                connection.Close();
+                    await command.ExecuteScalarAsync();
+                    connection.Close();
+                    return true;
+                }
+                return false;
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+
+        }
+
+        public static async Task<bool> AddAttributes(long id, Attributes attributes)
+        {
+            try
+            {
+                var connection = DBConnection.Instance().getConnection();
+                if (connection != null)
+                {
+                    var command = new MySqlCommand($"INSERT INTO player_attributes VALUES ({id}, " +
+                    $"{attributes.Strength}, " +
+                    $"{attributes.Dexterity}, " +
+                    $"{attributes.Constitution}, " +
+                    $"{attributes.Intelligence}, " +
+                    $"{attributes.Wisdom}, " +
+                    $"{attributes.Charisma})", connection);
+                    await command.ExecuteScalarAsync();
+
+                    connection.Close();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+
         }
 
         public static async Task<Attributes> GetAttributes(long DiscordId, long GuildId)
@@ -75,19 +124,19 @@ namespace DiscordBot.Database.Queries
             Attributes attributes = null;
             if (connection != null)
             {
-                var command = new MySqlCommand($"SELECT * FROM players p, player_attributes a INNER JOIN players ON a.Id=p.Id WHERE p.DiscordId={DiscordId} AND p.GuildId={GuildId}", connection);
+                var command = new MySqlCommand($"SELECT * FROM player_attributes a LEFT JOIN players p ON p.Id = a.Id WHERE p.DiscordId={DiscordId} AND p.GuildId={GuildId}", connection);
                 var reader = await command.ExecuteReaderAsync();
-               
+
                 if (reader.HasRows)
                 {
-                        attributes = new Attributes(
-                            reader.GetInt64(reader.GetOrdinal("Id")),
-                        reader.GetInt16(reader.GetOrdinal("Strength")),
-                        reader.GetInt16(reader.GetOrdinal("Dexterity")),
-                        reader.GetInt16(reader.GetOrdinal("Constitution")),
-                        reader.GetInt16(reader.GetOrdinal("Intelligence")),
-                        reader.GetInt16(reader.GetOrdinal("Wisdom")),
-                        reader.GetInt16(reader.GetOrdinal("Charisma")));
+                    attributes = new Attributes(
+                        reader.GetInt64(reader.GetOrdinal("Id")),
+                    reader.GetInt16(reader.GetOrdinal("Strength")),
+                    reader.GetInt16(reader.GetOrdinal("Dexterity")),
+                    reader.GetInt16(reader.GetOrdinal("Constitution")),
+                    reader.GetInt16(reader.GetOrdinal("Intelligence")),
+                    reader.GetInt16(reader.GetOrdinal("Wisdom")),
+                    reader.GetInt16(reader.GetOrdinal("Charisma")));
                 }
                 connection.Close();
             }
@@ -119,6 +168,17 @@ namespace DiscordBot.Database.Queries
             if (connection != null)
             {
                 var command = new MySqlCommand($"UPDATE players SET Xp=(Xp + {xp}) WHERE DiscordId={DiscordId} AND GuildId={GuildId}", connection);
+                await command.ExecuteScalarAsync();
+                connection.Close();
+            }
+        }
+
+        public static async Task SetGold(ulong DiscordId, ulong GuildId, uint gold)
+        {
+            var connection = DBConnection.Instance().getConnection();
+            if (connection != null)
+            {
+                var command = new MySqlCommand($"UPDATE players SET Gold={gold} WHERE DiscordId={DiscordId} AND GuildId={GuildId}", connection);
                 await command.ExecuteScalarAsync();
                 connection.Close();
             }
