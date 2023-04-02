@@ -40,6 +40,8 @@ namespace DiscordBot.PlayerFunctionality.Creation
                 Charisma = 8
             };
 
+            await ctx.Message.DeleteAsync();
+
             var category = ctx.Guild.Channels.Values.ToList().Find(x => x.Name == "Character creation");
             var permissionList = new System.Collections.Generic.List<DiscordOverwriteBuilder>() { new DiscordOverwriteBuilder(ctx.Member).Allow(Permissions.AccessChannels), new DiscordOverwriteBuilder(ctx.Guild.EveryoneRole).Deny(Permissions.AccessChannels) };
 
@@ -52,6 +54,9 @@ namespace DiscordBot.PlayerFunctionality.Creation
             }
 
             var channel = await ctx.Guild.CreateChannelAsync(ctx.Member.DisplayName + " character creator", DSharpPlus.ChannelType.Text, category, null, null, null, permissionList);
+
+            var tempMessage = await channel.SendMessageAsync(ctx.Member.Mention);
+            await tempMessage.DeleteAsync();
 
             var message = await CreateCharacterPopUp(ctx, channel);
             var interactivity = ctx.Client.GetInteractivity();
