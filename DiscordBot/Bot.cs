@@ -1,4 +1,5 @@
-﻿using Draconia_bot.Commands;
+﻿using DiscordBot.Commands.PlayerCommands;
+using Draconia_bot.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
@@ -25,10 +26,9 @@ namespace Draconia_bot
 
         public async Task RunAsync()
         {
-            
             string token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
 
-            if(token == null)
+            if (token == null)
             {
                 Console.WriteLine("Token was not found!");
                 Environment.Exit(-1);
@@ -55,12 +55,12 @@ namespace Draconia_bot
                 EnableMentionPrefix = true,
                 EnableDms = true,
                 EnableDefaultHelp = true,
-                DmHelp = true,
+                DmHelp = true
             };
 
             Commands = Client.UseCommandsNext(commandsConfig);
 
-            Commands.RegisterCommands<FunCommands>();
+            Commands.RegisterCommands<PlayerCommands>();
 
             await Client.ConnectAsync();
 

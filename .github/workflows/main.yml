@@ -46,6 +46,6 @@ jobs:
           docker pull lucabrugel/discordbot:latest
           docker stop /discordBot
           docker system prune -f
-          docker run -d --name=discordBot --env DISCORD_TOKEN=${{ secrets.DISCORDBOT_TOKEN }} lucabrugel/discordbot:latest
+          docker run -d --name=discordBot --env DISCORD_TOKEN=${{ secrets.DISCORDBOT_TOKEN }} --env DATABASE_PASSWORD=KingsOfLeon321! --add-host host.docker.internal:host-gateway lucabrugel/discordbot:latest
 
         

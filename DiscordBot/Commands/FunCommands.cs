@@ -1,10 +1,16 @@
-﻿using Draconia_bot.Handlers.Dialog;
+﻿using Data;
+using DiscordBot.Database;
+using DiscordBot.Database.Profile;
+using DiscordBot.Database.Queries;
+using Draconia_bot.Handlers.Dialog;
 using Draconia_bot.Handlers.Dialog.Steps;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Extensions;
+using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 using System.Linq;
 using System.Security;
 using System.Threading.Tasks;
