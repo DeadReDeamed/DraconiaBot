@@ -13,6 +13,7 @@ namespace Draconia_bot
 {
     public static class Program
     {
+        [STAThread]
         static void Main(string[] args)
         {
             DBConnection.Instance().Server = "host.docker.internal";
