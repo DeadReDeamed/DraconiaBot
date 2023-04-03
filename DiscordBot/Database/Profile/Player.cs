@@ -10,12 +10,12 @@
         public Attributes attributes { get; set; }
         public Inventory inventory { get; set; }
 
-        public Player(int id) : base(id) 
+        public Player(ulong id) : base(id) 
         {
             
         }
 
-        public Player(long id, string name, ulong DiscordId, ulong GuildId, int Xp, uint Gold) : base(id)
+        public Player(ulong id, string name, ulong DiscordId, ulong GuildId, int Xp, uint Gold) : base(id)
         {
             this.DiscordId = DiscordId;
             this.GuildId = GuildId; 

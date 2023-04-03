@@ -4,6 +4,7 @@ using DiscordBot.Database.Queries;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -14,6 +15,7 @@ namespace DiscordBot.PlayerFunctionality.Creation
     public class CharacterCreator
     {
         public Player player { get; private set; }
+        private InteractivityExtension interactivity;
         private Dictionary<string, short> emojiNumberPair = new Dictionary<string, short>()
         {
             {":one:", 1 },
@@ -29,6 +31,70 @@ namespace DiscordBot.PlayerFunctionality.Creation
 
         public async Task CreateCharacter(CommandContext ctx)
         {
+            await ctx.Message.DeleteAsync();
+            interactivity = ctx.Client.GetInteractivity();
+            var category = ctx.Guild.Channels.Values.ToList().Find(x => x.Name == "Character creation");
+            var permissionList = new System.Collections.Generic.List<DiscordOverwriteBuilder>() { new DiscordOverwriteBuilder(ctx.Guild.EveryoneRole).Deny(Permissions.AccessChannels) };
+
+            if (category == null)
+            {
+                category = await ctx.Guild.CreateChannelCategoryAsync("Character creation", permissionList, 100);
+            } else
+            {
+                await category.AddOverwriteAsync(ctx.Member, Permissions.AccessChannels);
+            }
+
+            var channel = category.Children.ToList().Find(x => x.Name == ctx.Member.DisplayName.ToLower() + "-character-creator");
+            if(channel != null) 
+            {
+                return;
+            }
+            channel = await ctx.Guild.CreateChannelAsync(ctx.Member.DisplayName + " character creator", DSharpPlus.ChannelType.Text, category, null, null, null, permissionList);
+            await channel.AddOverwriteAsync(ctx.Member, Permissions.AccessChannels);
+
+            var tempMessage = await channel.SendMessageAsync(ctx.Member.Mention);
+            await tempMessage.DeleteAsync();
+
+            player = await PlayerQuerries.GetPlayer(ctx.Member.Id, ctx.Guild.Id);
+
+            if(player != null) 
+            {
+                var deleteCharacterMessage = await channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                {
+                    Title = "Character already exists!",
+                    Color = DiscordColor.Yellow,
+                    Description = $"Character with the name {player.Name} already exists, do you want to create a new character and delete this one?"
+                });
+                await deleteCharacterMessage.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
+                await deleteCharacterMessage.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":negative_squared_cross_mark:"));
+
+                var deleteReaction = await interactivity.WaitForReactionAsync(deleteCharacterMessage, ctx.User, TimeSpan.FromMinutes(15));
+                string deleteReactionStr = deleteReaction.Result.Emoji.GetDiscordName();
+
+                if (deleteReactionStr.Equals(":white_check_mark:"))
+                {
+                    await PlayerQuerries.DeleteCharacter(player.Id, player.DiscordId, player.GuildId);
+                    await deleteCharacterMessage.DeleteAsync();
+                } 
+                else if (deleteReactionStr.Equals(":negative_squared_cross_mark:"))
+                {
+                    await channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                    {
+                        Title = "Canceling character creation",
+                        Color = DiscordColor.Yellow
+                    });
+
+                    await Task.Delay(1000);
+
+                    await channel.DeleteAsync();
+                    if (category.Children.Count == 0 )
+                    {
+                        await category.DeleteAsync();
+                    }
+
+                }
+            }
+
             player = new Player(0);
             player.Name = "empty";
             player.attributes = new Attributes
@@ -41,27 +107,18 @@ namespace DiscordBot.PlayerFunctionality.Creation
                 Charisma = 8
             };
 
-            await ctx.Message.DeleteAsync();
-
-            var category = ctx.Guild.Channels.Values.ToList().Find(x => x.Name == "Character creation");
-            var permissionList = new System.Collections.Generic.List<DiscordOverwriteBuilder>() { new DiscordOverwriteBuilder(ctx.Member).Allow(Permissions.AccessChannels), new DiscordOverwriteBuilder(ctx.Guild.EveryoneRole).Deny(Permissions.AccessChannels) };
-
-            if (category == null)
-            {
-                category = await ctx.Guild.CreateChannelCategoryAsync("Character creation", permissionList, 100);
-            } else
-            {
-                await category.AddOverwriteAsync(ctx.Member, Permissions.AccessChannels);
-            }
-
-            var channel = await ctx.Guild.CreateChannelAsync(ctx.Member.DisplayName + " character creator", DSharpPlus.ChannelType.Text, category, null, null, null, permissionList);
-
-            var tempMessage = await channel.SendMessageAsync(ctx.Member.Mention);
-            await tempMessage.DeleteAsync();
-
             var message = await CreateCharacterPopUp(ctx, channel);
-            var interactivity = ctx.Client.GetInteractivity();
-            var reaction = await interactivity.WaitForReactionAsync(message, ctx.User);
+
+            var reaction = await interactivity.WaitForReactionAsync(message, ctx.User, TimeSpan.FromMinutes(15));
+            if(reaction.Result == null)
+            {
+                await channel.DeleteAsync();
+                if (category.Children.Count == 0)
+                {
+                    await category.DeleteAsync();
+                }
+                return;
+            }
             string reactionStr = reaction.Result.Emoji.GetDiscordName();
 
             while (!reactionStr.Equals(":white_check_mark:"))
@@ -69,14 +126,23 @@ namespace DiscordBot.PlayerFunctionality.Creation
                 await message.DeleteAsync();
                 if (reactionStr.Equals(":scroll:"))
                 {
-                    await ChangeAttributes(ctx, channel);
+                    bool succeded = await ChangeAttributes(ctx, channel);
+                    if(!succeded) 
+                    {
+                        await channel.DeleteAsync();
+                        if (category.Children.Count == 0)
+                        {
+                            await category.DeleteAsync();
+                        }
+                        return;
+                    }
                 }
                 else if (reactionStr.Equals(":writing_hand:"))
                 {
                     await ChangeName(ctx, channel);
                 }
                 message = await CreateCharacterPopUp(ctx, channel);
-                reaction = await interactivity.WaitForReactionAsync(message, ctx.User);
+                reaction = await interactivity.WaitForReactionAsync(message, ctx.User, TimeSpan.FromMinutes(15));
                 if (reaction.Result != null)
                 {
                     reactionStr = reaction.Result.Emoji.GetDiscordName();
@@ -107,7 +173,7 @@ namespace DiscordBot.PlayerFunctionality.Creation
                     await Task.Delay(1000);
 
                     await channel.DeleteAsync();
-                    if (category.Children.Count <= 1)
+                    if (category.Children.Count == 0)
                     {
                         await category.DeleteAsync();
                     }
@@ -115,8 +181,8 @@ namespace DiscordBot.PlayerFunctionality.Creation
                 {
                     var errorEmbed = new DiscordEmbedBuilder
                     {
-                        Title = "Character not found",
-                        Description = "You don't have a character yet or something went wrong, please create one with the .createCharacter command!",
+                        Title = "Something went wrong",
+                        Description = "Please try again later!",
                         Color = DiscordColor.Red,
                     };
                     await ctx.Channel.SendMessageAsync(embed: errorEmbed);
@@ -184,11 +250,15 @@ namespace DiscordBot.PlayerFunctionality.Creation
             return message;
         }
 
-        private async Task ChangeAttributes(CommandContext ctx, DiscordChannel channel)
+        private async Task<bool> ChangeAttributes(CommandContext ctx, DiscordChannel channel)
         {
             var message = await CreateAttributesMessage(ctx, channel, attributePoints);
-            var interactivity = ctx.Client.GetInteractivity();
-            var reaction = await interactivity.WaitForReactionAsync(message, ctx.User);
+            var reaction = await interactivity.WaitForReactionAsync(message, ctx.User, TimeSpan.FromMinutes(15));
+            if(reaction.Result == null) 
+            {
+                await message.DeleteAsync();
+                return false;
+            }
             string reactionStr = reaction.Result.Emoji.GetDiscordName();
 
             while (!reactionStr.Equals(":white_check_mark:"))
@@ -232,10 +302,22 @@ namespace DiscordBot.PlayerFunctionality.Creation
                 }
                 embed.AddField("Attribute:", attributeText);
                 message = await channel.SendMessageAsync(embed: embed);
-                await message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":arrow_up:"));
-                await message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":arrow_down:"));
+                if (attributeValue != 15)
+                {
+                    await message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":arrow_up:"));
+                }
 
-                reaction = await interactivity.WaitForReactionAsync(message, ctx.User);
+                if (attributeValue != 8)
+                {
+                    await message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":arrow_down:"));
+                }
+
+                reaction = await interactivity.WaitForReactionAsync(message, ctx.User, TimeSpan.FromMinutes(15));
+                if(reaction.Result == null)
+                {
+                    await message.DeleteAsync();
+                    return false;
+                }
                 reactionStr = reaction.Result.Emoji.GetDiscordName();
 
                 bool addBool = false;
@@ -255,8 +337,13 @@ namespace DiscordBot.PlayerFunctionality.Creation
                     }
                 }
 
-                reaction = await interactivity.WaitForReactionAsync(message, ctx.User);
+                reaction = await interactivity.WaitForReactionAsync(message, ctx.User, TimeSpan.FromMinutes(15));
+                if(reaction.Result == null) {
+                    await message.DeleteAsync();
+                    return false; 
+                }
                 reactionStr = reaction.Result.Emoji.GetDiscordName();
+                
                 short numberAmount = emojiNumberPair[reactionStr];
 
                 if (addBool)
@@ -312,11 +399,17 @@ namespace DiscordBot.PlayerFunctionality.Creation
 
                 await message.DeleteAsync();
                 message = await CreateAttributesMessage(ctx, channel, attributePoints);
-                reaction = await interactivity.WaitForReactionAsync(message, ctx.User);
+                reaction = await interactivity.WaitForReactionAsync(message, ctx.User, TimeSpan.FromMinutes(15));
+                if(reaction.Result == null) 
+                {
+                    await message.DeleteAsync();
+                    return false; 
+                }
                 reactionStr = reaction.Result.Emoji.GetDiscordName();
             }
 
             await message.DeleteAsync();
+            return true;
         }
 
         private async Task ChangeName(CommandContext ctx, DiscordChannel channel)
@@ -330,11 +423,12 @@ namespace DiscordBot.PlayerFunctionality.Creation
             };
 
             var message = await channel.SendMessageAsync(embed: embed);
-            var interactivity = ctx.Client.GetInteractivity();
-            var nameMessage = await interactivity.WaitForMessageAsync(x => x.ChannelId == channel.Id && x.Author.Id == ctx.Message.Author.Id);
-
-            player.Name = nameMessage.Result.Content;
-            await nameMessage.Result.DeleteAsync();
+            var nameMessage = await interactivity.WaitForMessageAsync(x => x.ChannelId == channel.Id && x.Author.Id == ctx.Message.Author.Id, TimeSpan.FromMinutes(5));
+            if(nameMessage.Result != null)
+            {
+                player.Name = nameMessage.Result.Content;
+                await nameMessage.Result.DeleteAsync();
+            }
             await message.DeleteAsync();
         }
     }

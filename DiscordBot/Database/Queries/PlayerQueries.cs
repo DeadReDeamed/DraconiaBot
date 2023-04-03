@@ -21,7 +21,7 @@ namespace DiscordBot.Database.Queries
                     if (reader.HasRows)
                     {
                         await reader.ReadAsync();
-                        player = new Player(reader.GetInt32(reader.GetOrdinal("Id")),
+                        player = new Player(reader.GetUInt32(reader.GetOrdinal("Id")),
                             reader.GetString(reader.GetOrdinal("Name")),
                             reader.GetUInt64(reader.GetOrdinal("DiscordId")),
                             reader.GetUInt64(reader.GetOrdinal("GuildId")),
@@ -130,7 +130,7 @@ namespace DiscordBot.Database.Queries
                 if (reader.HasRows)
                 {
                     attributes = new Attributes(
-                        reader.GetInt64(reader.GetOrdinal("Id")),
+                        reader.GetUInt64(reader.GetOrdinal("Id")),
                     reader.GetInt16(reader.GetOrdinal("Strength")),
                     reader.GetInt16(reader.GetOrdinal("Dexterity")),
                     reader.GetInt16(reader.GetOrdinal("Constitution")),
@@ -182,6 +182,28 @@ namespace DiscordBot.Database.Queries
                 await command.ExecuteScalarAsync();
                 connection.Close();
             }
+        }
+
+        public static async Task DeleteCharacter(ulong id, ulong DiscordId, ulong GuildId)
+        {
+            try
+            {
+                var connection = DBConnection.Instance().getConnection();
+                if (connection != null)
+                {
+                    var command = new MySqlCommand($"DELETE FROM players WHERE DiscordId={DiscordId} AND GuildId={GuildId}", connection);
+                    await command.ExecuteScalarAsync();
+                    command = new MySqlCommand($"DELETE FROM player_attributes WHERE Id={id}", connection);
+                    await command.ExecuteScalarAsync();
+                    command = new MySqlCommand($"DELETE FROM inventory_items WHERE Id={id}", connection);
+                    await command.ExecuteScalarAsync();
+                    connection.Close();
+                }
+            } catch(Exception ex) 
+            {
+                Console.WriteLine(ex.Message);
+            } 
+
         }
     }
 }
