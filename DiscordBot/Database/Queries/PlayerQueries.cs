@@ -8,7 +8,7 @@ namespace DiscordBot.Database.Queries
 {
     public class PlayerQuerries
     {
-        public static async Task<Player> GetPlayer(ulong DiscordId, ulong GuildId)
+        public static async Task<Player> GetPlayer(ulong DiscordId)
         {
             Player player = null;
             var connection = DBConnection.Instance().getConnection();
@@ -16,7 +16,7 @@ namespace DiscordBot.Database.Queries
             {
                 try
                 {
-                    var command = new MySqlCommand($"SELECT * FROM player_attributes a LEFT JOIN players p ON p.Id = a.Id WHERE p.DiscordId={DiscordId} AND p.GuildId={GuildId}", connection);
+                    var command = new MySqlCommand($"SELECT * FROM player_attributes a LEFT JOIN players p ON p.Id = a.Id WHERE p.DiscordId={DiscordId}", connection);
                     var reader = await command.ExecuteReaderAsync();
                     if (reader.HasRows)
                     {
@@ -24,7 +24,6 @@ namespace DiscordBot.Database.Queries
                         player = new Player(reader.GetUInt32(reader.GetOrdinal("Id")),
                             reader.GetString(reader.GetOrdinal("Name")),
                             reader.GetUInt64(reader.GetOrdinal("DiscordId")),
-                            reader.GetUInt64(reader.GetOrdinal("GuildId")),
                             reader.GetInt32(reader.GetOrdinal("Xp")),
                             reader.GetUInt32(reader.GetOrdinal("Gold")));
 
@@ -46,13 +45,13 @@ namespace DiscordBot.Database.Queries
             return player;
         }
 
-        public static async Task<long> GetPlayerId(ulong DiscordId, ulong GuildId)
+        public static async Task<long> GetPlayerId(ulong DiscordId)
         {
             long id = 0;
             var connection = DBConnection.Instance().getConnection();
             if (connection != null)
             {
-                var command = new MySqlCommand($"SELECT Id FROM players WHERE players.DiscordId={DiscordId} AND players.GuildId={GuildId}", connection);
+                var command = new MySqlCommand($"SELECT Id FROM players WHERE players.DiscordId={DiscordId}", connection);
 
                 var reader = await command.ExecuteReaderAsync();
                 if (reader != null)
@@ -65,15 +64,15 @@ namespace DiscordBot.Database.Queries
             return id;
         }
 
-        public static async Task<bool> AddPlayer(string Name, ulong DiscordId, ulong GuildId)
+        public static async Task<bool> AddPlayer(string Name, ulong DiscordId)
         {
             try
             {
                 var connection = DBConnection.Instance().getConnection();
                 if (connection != null)
                 {
-                    var command = new MySqlCommand($"INSERT INTO players (Name, DiscordId, GuildId, Xp, Gold) VALUES" +
-                                                $"(\"{Name}\", {DiscordId}, {GuildId}, 0, 0)", connection);
+                    var command = new MySqlCommand($"INSERT INTO players (Name, DiscordId, Xp, Gold) VALUES" +
+                                                $"(\"{Name}\", {DiscordId}, 0, 0)", connection);
 
                     await command.ExecuteScalarAsync();
                     connection.Close();
@@ -118,13 +117,13 @@ namespace DiscordBot.Database.Queries
 
         }
 
-        public static async Task<Attributes> GetAttributes(long DiscordId, long GuildId)
+        public static async Task<Attributes> GetAttributes(long DiscordId)
         {
             var connection = DBConnection.Instance().getConnection();
             Attributes attributes = null;
             if (connection != null)
             {
-                var command = new MySqlCommand($"SELECT * FROM player_attributes a LEFT JOIN players p ON p.Id = a.Id WHERE p.DiscordId={DiscordId} AND p.GuildId={GuildId}", connection);
+                var command = new MySqlCommand($"SELECT * FROM player_attributes a LEFT JOIN players p ON p.Id = a.Id WHERE p.DiscordId={DiscordId}", connection);
                 var reader = await command.ExecuteReaderAsync();
 
                 if (reader.HasRows)
@@ -143,7 +142,7 @@ namespace DiscordBot.Database.Queries
             return attributes;
         }
 
-        public static async Task UpdateAttributes(long DiscordId, long GuildId, Attributes attributes)
+        public static async Task UpdateAttributes(long DiscordId, Attributes attributes)
         {
             var connection = DBConnection.Instance().getConnection();
             if (connection != null)
@@ -155,43 +154,43 @@ namespace DiscordBot.Database.Queries
                 $"Intelligence={attributes.Intelligence}, " +
                 $"Wisdom={attributes.Wisdom}, " +
                 $"Charisma={attributes.Charisma}" +
-                $"WHERE p.DiscordId={DiscordId} AND p.GuildId={GuildId}", connection);
+                $"WHERE p.DiscordId={DiscordId}", connection);
                 await command.ExecuteScalarAsync();
 
                 connection.Close();
             }
         }
 
-        public static async Task AddXp(ulong DiscordId, ulong GuildId, int xp)
+        public static async Task AddXp(ulong DiscordId, int xp)
         {
             var connection = DBConnection.Instance().getConnection();
             if (connection != null)
             {
-                var command = new MySqlCommand($"UPDATE players SET Xp=(Xp + {xp}) WHERE DiscordId={DiscordId} AND GuildId={GuildId}", connection);
+                var command = new MySqlCommand($"UPDATE players SET Xp=(Xp + {xp}) WHERE DiscordId={DiscordId}", connection);
                 await command.ExecuteScalarAsync();
                 connection.Close();
             }
         }
 
-        public static async Task SetGold(ulong DiscordId, ulong GuildId, uint gold)
+        public static async Task SetGold(ulong DiscordId, uint gold)
         {
             var connection = DBConnection.Instance().getConnection();
             if (connection != null)
             {
-                var command = new MySqlCommand($"UPDATE players SET Gold={gold} WHERE DiscordId={DiscordId} AND GuildId={GuildId}", connection);
+                var command = new MySqlCommand($"UPDATE players SET Gold={gold} WHERE DiscordId={DiscordId}", connection);
                 await command.ExecuteScalarAsync();
                 connection.Close();
             }
         }
 
-        public static async Task DeleteCharacter(ulong id, ulong DiscordId, ulong GuildId)
+        public static async Task DeleteCharacter(ulong id, ulong DiscordId)
         {
             try
             {
                 var connection = DBConnection.Instance().getConnection();
                 if (connection != null)
                 {
-                    var command = new MySqlCommand($"DELETE FROM players WHERE DiscordId={DiscordId} AND GuildId={GuildId}", connection);
+                    var command = new MySqlCommand($"DELETE FROM players WHERE DiscordId={DiscordId}", connection);
                     await command.ExecuteScalarAsync();
                     command = new MySqlCommand($"DELETE FROM player_attributes WHERE Id={id}", connection);
                     await command.ExecuteScalarAsync();
