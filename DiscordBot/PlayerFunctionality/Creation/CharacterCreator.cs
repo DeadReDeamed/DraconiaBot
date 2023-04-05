@@ -8,6 +8,7 @@ using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 
 namespace DiscordBot.PlayerFunctionality.Creation
@@ -68,6 +69,7 @@ namespace DiscordBot.PlayerFunctionality.Creation
                     await Task.Delay(1000);
 
                     await cancelMessage.DeleteAsync();
+                    return;
                 }
             }
 
@@ -148,7 +150,7 @@ namespace DiscordBot.PlayerFunctionality.Creation
                         Description = "Please try again later!",
                         Color = DiscordColor.Red,
                     };
-                    await ctx.Channel.SendMessageAsync(embed: errorEmbed);
+                    await channel.SendMessageAsync(embed: errorEmbed);
                 }
             }
 
