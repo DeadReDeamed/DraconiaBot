@@ -16,7 +16,7 @@ namespace DiscordBot.Commands.PlayerCommands
         {
             var DiscordId = ctx.User.Id;
             var GuildId = ctx.Guild.Id;
-            var player = await PlayerQuerries.GetPlayer(DiscordId, GuildId);
+            var player = await PlayerQuerries.GetPlayer(DiscordId);
             if (player == null)
             {
                 var errorEmbed = new DiscordEmbedBuilder
@@ -56,7 +56,7 @@ namespace DiscordBot.Commands.PlayerCommands
             var DiscordId = ctx.User.Id;
             var GuildId = ctx.Guild.Id;
 
-            await PlayerQuerries.AddXp(DiscordId, GuildId, amount);
+            await PlayerQuerries.AddXp(DiscordId, amount);
             await ctx.Channel.SendMessageAsync($"{amount} xp added");
         }
 
@@ -67,7 +67,7 @@ namespace DiscordBot.Commands.PlayerCommands
             var DiscordId = member.Id;
             var GuildId = ctx.Guild.Id;
 
-            await PlayerQuerries.AddXp(DiscordId, GuildId, amount);
+            await PlayerQuerries.AddXp(DiscordId, amount);
             await ctx.Channel.SendMessageAsync($"{amount} xp added");
         }
 

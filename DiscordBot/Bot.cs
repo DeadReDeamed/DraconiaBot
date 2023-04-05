@@ -39,7 +39,8 @@ namespace Draconia_bot
                 Token = token,
                 TokenType = TokenType.Bot,
                 AutoReconnect = true,
-                Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
+                Intents = DiscordIntents.All,
+                
             };
 
             Client = new DiscordClient(config);
@@ -55,7 +56,7 @@ namespace Draconia_bot
                 EnableMentionPrefix = true,
                 EnableDms = true,
                 EnableDefaultHelp = true,
-                DmHelp = true
+                DmHelp = true,
             };
 
             Commands = Client.UseCommandsNext(commandsConfig);
