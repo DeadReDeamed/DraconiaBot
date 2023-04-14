@@ -1,4 +1,5 @@
 ﻿using DiscordBot.Commands.PlayerCommands;
+using DiscordBot.Commands.ShopCommands;
 using Draconia_bot.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -62,6 +63,7 @@ namespace Draconia_bot
             Commands = Client.UseCommandsNext(commandsConfig);
 
             Commands.RegisterCommands<PlayerCommands>();
+            Commands.RegisterCommands<ShopCommands>();
 
             await Client.ConnectAsync();
 
