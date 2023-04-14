@@ -41,9 +41,7 @@ namespace DiscordBot.Commands.PlayerCommands
             embed.AddField("Attributes", $":muscle: Strength: {player.attributes.Strength}" +
                 $"\n:man_running: Dexterity: {player.attributes.Dexterity}" +
                 $"\n:heart: Constitution:{player.attributes.Constitution} " +
-                $"\n:brain: Intelligence: {player.attributes.Intelligence}" +
-                $"\n:church: Wisdom: {player.attributes.Wisdom}" +
-                $"\n:speech_balloon: Charisma: {player.attributes.Charisma}");
+                $"\n:brain: Intelligence: {player.attributes.Intelligence}") ;
             embed.AddField("Inventory: ", "empty");
             embed.WithThumbnail(ctx.Guild.Members[player.DiscordId].AvatarUrl);
             await ctx.Channel.SendMessageAsync(embed: embed);
@@ -76,6 +74,13 @@ namespace DiscordBot.Commands.PlayerCommands
         {
             CharacterCreator creator = new CharacterCreator();
             await creator.CreateCharacter(ctx);
+        }
+
+        [Command("createRandomCharacter")]
+        public async Task CreateRandomCharacter(CommandContext ctx, string name)
+        {
+            CharacterCreator creator = new CharacterCreator();
+            await creator.CreateRandomCharacter(ctx, name);
         }
     }
 }

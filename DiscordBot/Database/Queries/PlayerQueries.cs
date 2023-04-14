@@ -31,9 +31,7 @@ namespace DiscordBot.Database.Queries
                             reader.GetInt16(reader.GetOrdinal("Strength")),
                             reader.GetInt16(reader.GetOrdinal("Dexterity")),
                             reader.GetInt16(reader.GetOrdinal("Constitution")),
-                            reader.GetInt16(reader.GetOrdinal("Intelligence")),
-                            reader.GetInt16(reader.GetOrdinal("Wisdom")),
-                            reader.GetInt16(reader.GetOrdinal("Charisma")));
+                            reader.GetInt16(reader.GetOrdinal("Intelligence")));
                     }
                 }
                 catch (Exception ex)
@@ -99,9 +97,7 @@ namespace DiscordBot.Database.Queries
                     $"{attributes.Strength}, " +
                     $"{attributes.Dexterity}, " +
                     $"{attributes.Constitution}, " +
-                    $"{attributes.Intelligence}, " +
-                    $"{attributes.Wisdom}, " +
-                    $"{attributes.Charisma})", connection);
+                    $"{attributes.Intelligence})", connection);
                     await command.ExecuteScalarAsync();
 
                     connection.Close();
@@ -133,9 +129,7 @@ namespace DiscordBot.Database.Queries
                     reader.GetInt16(reader.GetOrdinal("Strength")),
                     reader.GetInt16(reader.GetOrdinal("Dexterity")),
                     reader.GetInt16(reader.GetOrdinal("Constitution")),
-                    reader.GetInt16(reader.GetOrdinal("Intelligence")),
-                    reader.GetInt16(reader.GetOrdinal("Wisdom")),
-                    reader.GetInt16(reader.GetOrdinal("Charisma")));
+                    reader.GetInt16(reader.GetOrdinal("Intelligence")));
                 }
                 connection.Close();
             }
@@ -152,9 +146,7 @@ namespace DiscordBot.Database.Queries
                 $"Dexterity={attributes.Dexterity}, " +
                 $"Constitution={attributes.Constitution}, " +
                 $"Intelligence={attributes.Intelligence}, " +
-                $"Wisdom={attributes.Wisdom}, " +
-                $"Charisma={attributes.Charisma}" +
-                $"WHERE p.DiscordId={DiscordId}", connection);
+                $"WHERE p.DiscordId={DiscordId})", connection);
                 await command.ExecuteScalarAsync();
 
                 connection.Close();

@@ -28,7 +28,118 @@ namespace DiscordBot.PlayerFunctionality.Creation
             {":seven:", 7 }
         };
 
-        int attributePoints = 25;
+        int attributePoints = 12;
+
+        public async Task CreateRandomCharacter(CommandContext ctx, string name)
+        {
+            await ctx.Message.DeleteAsync();
+            var channel = await ctx.Member.CreateDmChannelAsync();
+            interactivity = ctx.Client.GetInteractivity();
+
+            player = await PlayerQuerries.GetPlayer(ctx.Member.Id);
+
+            if (player != null)
+            {
+                var deleteCharacterMessage = await channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                {
+                    Title = "Character already exists!",
+                    Color = DiscordColor.Yellow,
+                    Description = $"Character with the name {player.Name} already exists, do you want to create a new character and delete this one?"
+                });
+                await deleteCharacterMessage.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
+                await deleteCharacterMessage.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":negative_squared_cross_mark:"));
+
+                var deleteReaction = await interactivity.WaitForReactionAsync(deleteCharacterMessage, ctx.User, TimeSpan.FromMinutes(15));
+                string deleteReactionStr = deleteReaction.Result.Emoji.GetDiscordName();
+
+                if (deleteReactionStr.Equals(":white_check_mark:"))
+                {
+                    await PlayerQuerries.DeleteCharacter(player.Id, player.DiscordId);
+                    await deleteCharacterMessage.DeleteAsync();
+                }
+                else if (deleteReactionStr.Equals(":negative_squared_cross_mark:"))
+                {
+                    var cancelMessage = await channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                    {
+                        Title = "Canceling character creation",
+                        Color = DiscordColor.Yellow
+                    });
+                    await Task.Delay(1000);
+
+                    await cancelMessage.DeleteAsync();
+                    return;
+                }
+            }
+            player = new Player(name);
+
+            CreateRandomAttributes();
+
+            player.DiscordId = ctx.User.Id;
+            bool succes = await PlayerQuerries.AddPlayer(player.Name, player.DiscordId);
+            if (succes)
+            {
+                long id = await PlayerQuerries.GetPlayerId(player.DiscordId);
+                succes = await PlayerQuerries.AddAttributes(id, player.attributes);
+                if (succes)
+                {
+                    await Task.Delay(1000);
+                    await channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                    {
+                        Title = "Character created",
+                        Color = DiscordColor.Green
+                    });
+                }
+                else
+                {
+                    var errorEmbed = new DiscordEmbedBuilder
+                    {
+                        Title = "Something went wrong",
+                        Description = "Please try again later!",
+                        Color = DiscordColor.Red,
+                    };
+                    await channel.SendMessageAsync(embed: errorEmbed);
+                }
+            }
+        }
+
+        public void CreateRandomAttributes()
+        {
+            Random random = new Random();
+            short[] randomAttributes = new short[]{ 8, 8, 8, 8 };
+
+            while(attributePoints > 0)
+            {
+                for(int i = 0; i < randomAttributes.Length; i++) 
+                {
+                    int randomPlus = 0;
+                    if (attributePoints == 0) break;
+                    if(attributePoints >= 7) 
+                    {
+                        randomPlus = random.Next(1, 7);
+                    } else
+                    {
+                        randomPlus = random.Next(1, attributePoints);
+                    }
+                    randomAttributes[i] += (short)randomPlus;
+                    if (randomAttributes[i] > 15)
+                    {
+                        int overflow = randomAttributes[i] % 15;
+                        randomAttributes[i] = 15;
+                        randomPlus -= overflow;
+                    }
+                    attributePoints -= randomPlus;
+                }
+            }
+
+            player.attributes = new Attributes
+            {
+                Strength = randomAttributes[0],
+                Constitution = randomAttributes[1],
+                Intelligence = randomAttributes[2],
+                Dexterity = randomAttributes[3],
+            };
+
+        }
 
         public async Task CreateCharacter(CommandContext ctx)
         {
@@ -81,9 +192,7 @@ namespace DiscordBot.PlayerFunctionality.Creation
                 Strength = 8,
                 Dexterity = 8,
                 Constitution = 8,
-                Intelligence = 8,
-                Wisdom = 8,
-                Charisma = 8
+                Intelligence = 8
             };
 
             var message = await CreateCharacterPopUp(ctx, channel);
@@ -107,7 +216,13 @@ namespace DiscordBot.PlayerFunctionality.Creation
                     bool succeded = await ChangeAttributes(ctx, channel);
                     if(!succeded) 
                     {
-                        return;
+                        message = await CreateCharacterPopUp(ctx, channel);
+                        reaction = await interactivity.WaitForReactionAsync(message, ctx.User, TimeSpan.FromMinutes(15));
+                        if (reaction.Result != null)
+                        {
+                            reactionStr = reaction.Result.Emoji.GetDiscordName();
+                        }
+                        continue;
                     }
                 }
                 else if (reactionStr.Equals(":writing_hand:"))
@@ -171,9 +286,7 @@ namespace DiscordBot.PlayerFunctionality.Creation
             embed.AddField("Attributes", $":muscle: Strength: {player.attributes.Strength}" +
                 $"\n:man_running: Dexterity: {player.attributes.Dexterity}" +
                 $"\n:heart: Constitution:{player.attributes.Constitution} " +
-                $"\n:brain: Intelligence: {player.attributes.Intelligence}" +
-                $"\n:church: Wisdom: {player.attributes.Wisdom}" +
-                $"\n:speech_balloon: Charisma: {player.attributes.Charisma}");
+                $"\n:brain: Intelligence: {player.attributes.Intelligence}");
             embed.WithFooter("Click on the checkmark to finish your character");
 
             var message = await channel.SendMessageAsync(embed: embed);
@@ -188,7 +301,7 @@ namespace DiscordBot.PlayerFunctionality.Creation
 
         private async Task<DiscordMessage> CreateAttributesMessage(CommandContext ctx, DiscordChannel channel, int abilityPoints)
         {
-            String[] abilityEmojies = { ":muscle:", ":man_running:", ":heart:", ":brain:", ":church:", ":speech_balloon:", ":white_check_mark:" };
+            String[] abilityEmojies = { ":muscle:", ":man_running:", ":heart:", ":brain:", ":white_check_mark:"};
             var embed = new DiscordEmbedBuilder
             {
                 Title = "Character creator",
@@ -201,9 +314,7 @@ namespace DiscordBot.PlayerFunctionality.Creation
             embed.AddField("Attributes", $":muscle: Strength: {player.attributes.Strength}" +
                 $"\n:man_running: Dexterity: {player.attributes.Dexterity}" +
                 $"\n:heart: Constitution:{player.attributes.Constitution} " +
-                $"\n:brain: Intelligence: {player.attributes.Intelligence}" +
-                $"\n:church: Wisdom: {player.attributes.Wisdom}" +
-                $"\n:speech_balloon: Charisma: {player.attributes.Charisma}");
+                $"\n:brain: Intelligence: {player.attributes.Intelligence}");
             embed.WithFooter("Click on the checkmark to finish changing attributes");
 
             var message = await channel.SendMessageAsync(embed: embed);
@@ -256,18 +367,10 @@ namespace DiscordBot.PlayerFunctionality.Creation
                         attributeText = $":brain: Intelligence: {player.attributes.Intelligence}";
                         attributeValue = player.attributes.Intelligence;
                         break;
-                    case ":church:":
-                        attributeText = $":church: Wisdom: {player.attributes.Wisdom}";
-                        attributeValue = player.attributes.Wisdom;
-                        break;
-                    case ":speech_balloon:":
-                        attributeText = $":speech_balloon: Charisma: {player.attributes.Charisma}";
-                        attributeValue = player.attributes.Charisma;
-                        break;
                 }
                 embed.AddField("Attribute:", attributeText);
                 message = await channel.SendMessageAsync(embed: embed);
-                if (attributeValue != 15)
+                if (attributeValue != 15 && attributePoints != 0)
                 {
                     await message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":arrow_up:"));
                 }
@@ -276,9 +379,11 @@ namespace DiscordBot.PlayerFunctionality.Creation
                 {
                     await message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":arrow_down:"));
                 }
+                await message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":negative_squared_cross_mark:"));
+
 
                 reaction = await interactivity.WaitForReactionAsync(message, ctx.User, TimeSpan.FromMinutes(15));
-                if(reaction.Result == null)
+                if(reaction.Result == null || reaction.Result.Emoji.GetDiscordName() == ":negative_squared_cross_mark:")
                 {
                     await message.DeleteAsync();
                     return false;
@@ -328,12 +433,6 @@ namespace DiscordBot.PlayerFunctionality.Creation
                         case ":brain:":
                             player.attributes.Intelligence += numberAmount;
                             break;
-                        case ":church:":
-                            player.attributes.Wisdom += numberAmount;
-                            break;
-                        case ":speech_balloon:":
-                            player.attributes.Charisma += numberAmount;
-                            break;
                     }
                     attributePoints -= numberAmount;
                 }
@@ -352,12 +451,6 @@ namespace DiscordBot.PlayerFunctionality.Creation
                             break;
                         case ":brain:":
                             player.attributes.Intelligence -= numberAmount;
-                            break;
-                        case ":church:":
-                            player.attributes.Wisdom -= numberAmount;
-                            break;
-                        case ":speech_balloon:":
-                            player.attributes.Charisma -= numberAmount;
                             break;
                     }
                     attributePoints += numberAmount;
