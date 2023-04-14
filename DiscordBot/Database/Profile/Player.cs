@@ -14,6 +14,11 @@
             
         }
 
+        public Player(string Name) : base(0)
+        {
+            this.Name = Name;
+        }
+
         public Player(ulong id, string name, ulong DiscordId, int Xp, uint Gold) : base(id)
         {
             this.DiscordId = DiscordId;
